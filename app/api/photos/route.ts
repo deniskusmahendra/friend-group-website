@@ -1,4 +1,5 @@
 import { del } from "@vercel/blob";
+import { blobConfigured } from "@/lib/blob";
 
 // Deletes an uploaded photo file from Vercel Blob. Only files under /photos/
 // in a Blob store can be targeted.
@@ -18,7 +19,7 @@ function isUploadedPhotoUrl(value: unknown): value is string {
 }
 
 export async function DELETE(request: Request) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  if (!blobConfigured()) {
     return Response.json({ error: "Photo uploads aren't set up yet." }, { status: 503 });
   }
 
@@ -27,6 +28,11 @@ export async function DELETE(request: Request) {
     return Response.json({ error: "Not an uploaded photo" }, { status: 400 });
   }
 
-  await del(url);
+  try {
+    await del(url);
+  } catch (err) {
+    console.error("[photos] delete failed", err);
+    return Response.json({ error: "Delete failed" }, { status: 502 });
+  }
   return new Response(null, { status: 204 });
 }

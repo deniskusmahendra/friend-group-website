@@ -41,13 +41,14 @@ export async function uploadPhotos(
   by: MemberId,
   onProgress: (done: number, total: number) => void,
 ): Promise<UploadResult> {
-  const [{ upload }, { store }] = await Promise.all([import("@vercel/blob/client"), getStore()]);
+  const [{ uploadPresigned }, { store }] = await Promise.all([import("@vercel/blob/client"), getStore()]);
   const result: UploadResult = { srcs: [], failed: [] };
 
   for (const [i, file] of files.entries()) {
     try {
       const img = await compressImage(file);
-      const blob = await upload(`photos/${by}.${img.ext}`, img.blob, {
+      // Unique name per photo; the server only signs URLs for this exact path
+      const blob = await uploadPresigned(`photos/${by}-${crypto.randomUUID()}.${img.ext}`, img.blob, {
         access: "public",
         handleUploadUrl: "/api/upload",
         contentType: img.blob.type,
