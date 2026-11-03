@@ -52,6 +52,8 @@ export type UploadedPhoto = Doc & {
   src: string;
   width: number;
   height: number;
+  /** Id of the album it was uploaded into; "" (or missing on older photos) = the Together album */
+  album?: string;
 };
 
 export type Collections = {

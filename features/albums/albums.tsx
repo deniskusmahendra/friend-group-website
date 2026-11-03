@@ -28,12 +28,20 @@ function useAlbums() {
   const { rows, loading } = useCollection("albums");
   const library = usePhotoLibrary();
 
-  // Always-there album with every photo, uploads included
+  // An upload belongs to the album it was uploaded into. Older uploads have no album set,
+  // so for those: whichever custom album lists them.
+  const inCustomAlbum = (p: Photo) => {
+    if (!p.upload) return false;
+    if (p.upload.album) return loading || rows.some((a) => a.id === p.upload!.album && a.photos.includes(p.src));
+    return p.upload.album === undefined && rows.some((a) => a.photos.includes(p.src));
+  };
+
+  // Always-there album: built-in photos plus uploads that don't belong to a custom album
   const together: AlbumView = {
     id: "together",
     title: "Together",
-    description: "Every pic of us, all in one place.",
-    photos: library.all.map((p) => p.src),
+    description: "All our pics. Photos uploaded to other albums stay in those albums.",
+    photos: library.all.filter((p) => !inCustomAlbum(p)).map((p) => p.src),
     builtin: true,
   };
   const albums: AlbumView[] = [together, ...[...rows].sort((a, b) => b.createdAt - a.createdAt)];
@@ -129,7 +137,7 @@ export function AlbumDetail({ id }: { id: string }) {
 
   const albumPhotos = library.resolve(album.photos);
 
-  // New uploads go into the library ("Together") and, for custom albums, into this album too
+  // Uploads on a custom album's page go into that album only
   const addToAlbum = album.builtin
     ? undefined
     : (srcs: string[]) => mutate((s) => s.update("albums", album.id, { photos: [...album.photos, ...srcs] }));
@@ -142,7 +150,7 @@ export function AlbumDetail({ id }: { id: string }) {
         description={album.description}
         action={
           <>
-            <UploadButton onUploaded={addToAlbum} />
+            <UploadButton albumId={album.builtin ? undefined : album.id} onUploaded={addToAlbum} />
             {!album.builtin && (
               <Button variant="outline" size="lg" onClick={() => requireMe() && setEditing(true)}>
                 <Pencil /> Edit

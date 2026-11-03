@@ -19,7 +19,7 @@ export function usePhotoLibrary() {
         width: p.width,
         height: p.height,
         alt: `Photo uploaded by ${nameOf(p.by)}`,
-        upload: { id: p.id, by: p.by },
+        upload: { id: p.id, by: p.by, album: p.album },
       }));
     const all = [...uploaded, ...builtInPhotos];
     const bySrc = new Map(all.map((p) => [p.src, p]));
@@ -39,6 +39,8 @@ export type UploadResult = { srcs: string[]; failed: string[] };
 export async function uploadPhotos(
   files: File[],
   by: MemberId,
+  /** Custom album the photos belong to; omit for the Together album */
+  albumId: string | undefined,
   onProgress: (done: number, total: number) => void,
 ): Promise<UploadResult> {
   const [{ uploadPresigned }, { store }] = await Promise.all([import("@vercel/blob/client"), getStore()]);
@@ -53,7 +55,7 @@ export async function uploadPhotos(
         handleUploadUrl: "/api/upload",
         contentType: img.blob.type,
       });
-      await store.add("photos", { src: blob.url, width: img.width, height: img.height, by });
+      await store.add("photos", { src: blob.url, width: img.width, height: img.height, by, album: albumId ?? "" });
       result.srcs.push(blob.url);
     } catch (err) {
       console.error(`Upload failed: ${file.name}`, err);

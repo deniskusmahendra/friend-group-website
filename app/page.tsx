@@ -9,19 +9,11 @@ import { site } from "@/content/site";
 export default function HomePage() {
   return (
     <div className="flex flex-col gap-12">
-      <section className="relative aspect-4/5 overflow-hidden rounded-3xl border shadow-2xl sm:aspect-3/2 sm:max-h-140">
-        <Image
-          src={site.groupPhoto.src}
-          alt={site.groupPhoto.alt}
-          fill
-          preload
-          sizes="(min-width: 1152px) 1104px, 100vw"
-          className="object-cover object-[center_30%]"
-        />
-        <div className="absolute inset-0 flex flex-col justify-end gap-2.5 bg-linear-to-t from-background/95 via-background/35 via-45% to-transparent to-70% p-5 sm:p-10">
-          <h1 className="font-pixel text-6xl font-bold text-white glow-white sm:text-8xl">{site.name}</h1>
+      <section className="grid items-center gap-6 overflow-hidden rounded-3xl border bg-card/60 p-4 shadow-2xl sm:p-6 md:grid-cols-[1fr_minmax(0,30rem)] md:gap-10 md:p-10">
+        <div className="order-2 flex flex-col gap-3 md:order-1">
+          <h1 className="font-pixel text-6xl font-bold text-white glow-white sm:text-7xl lg:text-8xl">{site.name}</h1>
           <p className="text-lg text-white/85 sm:text-xl">{site.tagline}</p>
-          <div className="mt-2 flex flex-wrap gap-2.5">
+          <div className="mt-3 flex flex-wrap gap-2.5">
             <Link
               href="/hangouts"
               className={cn(buttonVariants({ size: "lg" }), "h-11 px-5 text-base shadow-[0_4px_24px_-4px_var(--neon-red)]")}
@@ -33,6 +25,16 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+        {/* Square photo shown whole, so the title and everyone's feet stay in frame */}
+        <Image
+          src={site.heroPhoto.src}
+          alt={site.heroPhoto.alt}
+          width={site.heroPhoto.width}
+          height={site.heroPhoto.height}
+          preload
+          sizes="(min-width: 768px) 30rem, 100vw"
+          className="order-1 aspect-square w-full rounded-2xl object-cover shadow-[0_0_40px_-12px_var(--neon-red)] ring-1 ring-white/10 md:order-2"
+        />
       </section>
 
       <section>

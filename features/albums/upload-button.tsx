@@ -9,9 +9,12 @@ import { uploadPhotos } from "@/features/albums/photo-library";
 
 /** Opens the file picker and uploads the chosen photos. onUploaded gets the new photo srcs. */
 export function UploadButton({
+  albumId,
   onUploaded,
   size = "lg",
 }: {
+  /** Custom album to upload into; omit for the Together album */
+  albumId?: string;
   onUploaded?: (srcs: string[]) => void | Promise<unknown>;
   size?: "lg" | "default";
 }) {
@@ -26,7 +29,7 @@ export function UploadButton({
     setBusy(true);
     const id = toast.loading(`Uploading 0 / ${files.length}…`);
     try {
-      const { srcs, failed } = await uploadPhotos(files, me, (done, total) =>
+      const { srcs, failed } = await uploadPhotos(files, me, albumId, (done, total) =>
         toast.loading(`Uploading ${done} / ${total}…`, { id }),
       );
       if (srcs.length) await onUploaded?.(srcs);

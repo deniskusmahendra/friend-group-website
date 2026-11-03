@@ -4,7 +4,7 @@ export type Photo = {
   height: number;
   alt: string;
   /** Set for photos uploaded through the site */
-  upload?: { id: string; by: string };
+  upload?: { id: string; by: string; album?: string };
 };
 
 // Photos live in public/photos. To add one: drop the file in that folder

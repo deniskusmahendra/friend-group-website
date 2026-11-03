@@ -2,7 +2,8 @@ export const site = {
   name: "GANG",
   tagline: "nine friends, one group chat, too many plans",
   description: "Our friend group's home: photo albums, hangout plans, gaming sessions, and wishes & goals.",
-  groupPhoto: { src: "/group.jpg", width: 2528, height: 1685, alt: "The gang together under the neon GANG sign" },
+  /** Main photo on the home page */
+  heroPhoto: { src: "/hero.jpg", width: 1280, height: 1280, alt: "The gang under the Minecraft GANG title" },
 };
 
 /** Suggestions when scheduling a gaming session */
