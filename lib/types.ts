@@ -1,6 +1,13 @@
 import type { MemberId, OwnerId } from "@/content/members";
 
-type Doc = { id: string; createdAt: number; by: MemberId };
+type Doc = {
+  id: string;
+  createdAt: number;
+  by: MemberId;
+  /** Set when moved to Trash (ms timestamp); null/missing = live */
+  deletedAt?: number | null;
+  deletedBy?: MemberId | null;
+};
 
 /** Maps keyed by member id. A null value means "removed" (Firestore-friendly). */
 type MemberMap<V> = Partial<Record<MemberId, V | null>>;
@@ -67,7 +74,9 @@ export type Collections = {
 export type CollectionName = keyof Collections;
 
 /** Fields the caller provides when creating a document */
-export type NewDoc<C extends CollectionName> = Omit<Collections[C], "id" | "createdAt">;
+export type NewDoc<C extends CollectionName> = Omit<Collections[C], "id" | "createdAt" | "deletedAt" | "deletedBy">;
+
+export const collectionNames: CollectionName[] = ["hangouts", "sessions", "wishes", "albums", "photos"];
 
 /** Member ids whose value in the map is set (not null/false) */
 export const membersIn = <V,>(map: MemberMap<V> | undefined) =>

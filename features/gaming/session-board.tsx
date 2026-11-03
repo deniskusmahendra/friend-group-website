@@ -12,6 +12,7 @@ import { CalendarButton, DateBadge, DeleteButton, LiveBadge, PastToggle } from "
 import { Field, FieldRow, FormDialog, FormSelect } from "@/components/form-dialog";
 import { downloadIcs, safeUrl } from "@/lib/ics";
 import { mutate } from "@/lib/mutate";
+import { moveToTrash } from "@/lib/trash";
 import { byStart, durationOptions, formatWhen, isLive, isUpcoming, relativeTime } from "@/lib/time";
 import { membersIn, type Session } from "@/lib/types";
 import { useCollection } from "@/lib/use-collection";
@@ -156,7 +157,7 @@ function SessionCard({ session: s, now }: { session: Session; now: number }) {
                 }
               />
             )}
-            {s.by === me && <DeleteButton onDelete={() => mutate((st) => st.remove("sessions", s.id), "Session deleted")} />}
+            {s.by === me && <DeleteButton onDelete={() => moveToTrash("sessions", s.id, me, "Session")} />}
           </span>
           <span className="flex items-center gap-2 text-sm text-muted-foreground">
             <MemberAvatar id={s.by} size="xs" ring={false} /> host: {nameOf(s.by)}

@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { compressImage } from "@/lib/compress-image";
 import { getStore } from "@/lib/store";
+import { moveToTrash } from "@/lib/trash";
 import { useCollection } from "@/lib/use-collection";
 import { nameOf, type MemberId } from "@/content/members";
 import { photos as builtInPhotos, type Photo } from "@/content/photos";
@@ -66,15 +67,8 @@ export async function uploadPhotos(
   return result;
 }
 
-/** Removes the file from Blob storage and its record from the database */
-export async function deleteUploadedPhoto(photo: Photo) {
-  if (!photo.upload) throw new Error("Only uploaded photos can be deleted");
-  const res = await fetch("/api/photos", {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ url: photo.src }),
-  });
-  if (!res.ok) throw new Error(`Delete failed (${res.status})`);
-  const { store } = await getStore();
-  await store.remove("photos", photo.upload.id);
+/** Moves an uploaded photo to Trash. Its file stays in Blob storage until Trash is emptied. */
+export function trashUploadedPhotos(photos: Photo[], me: MemberId) {
+  const ids = photos.flatMap((p) => (p.upload ? [p.upload.id] : []));
+  return moveToTrash("photos", ids, me, ids.length > 1 ? `${ids.length} photos` : "Photo");
 }

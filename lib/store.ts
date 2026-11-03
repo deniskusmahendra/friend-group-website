@@ -16,6 +16,8 @@ export interface Store {
   add<C extends CollectionName>(col: C, data: NewDoc<C>): Promise<string>;
   update(col: CollectionName, id: string, patch: Record<string, unknown>): Promise<void>;
   remove(col: CollectionName, id: string): Promise<void>;
+  /** Writes a whole document under a known id (restoring a backup) */
+  put(col: CollectionName, id: string, data: Record<string, unknown>): Promise<void>;
 }
 
 // Must be referenced literally so Next.js can inline them into the client bundle.
@@ -57,6 +59,9 @@ async function createFirebaseStore(): Promise<Store> {
     },
     async remove(col, id) {
       await fs.deleteDoc(fs.doc(db, col, id));
+    },
+    async put(col, id, data) {
+      await fs.setDoc(fs.doc(db, col, id), data);
     },
   };
 }
@@ -121,6 +126,9 @@ function createLocalStore(): Store {
     },
     async remove(col, id) {
       write(col, read(col).filter((row) => row.id !== id));
+    },
+    async put(col, id, data) {
+      write(col, [...read(col).filter((row) => row.id !== id), { ...data, id }]);
     },
   };
 }

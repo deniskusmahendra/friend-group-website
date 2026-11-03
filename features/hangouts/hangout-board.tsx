@@ -12,6 +12,7 @@ import { CalendarButton, DateBadge, DeleteButton, LiveBadge, PastToggle } from "
 import { Field, FieldRow, FormDialog, FormSelect } from "@/components/form-dialog";
 import { downloadIcs } from "@/lib/ics";
 import { mutate } from "@/lib/mutate";
+import { moveToTrash } from "@/lib/trash";
 import { byStart, durationOptions, formatWhen, isLive, isUpcoming, relativeTime } from "@/lib/time";
 import { membersIn, type Hangout, type RsvpStatus } from "@/lib/types";
 import { useCollection } from "@/lib/use-collection";
@@ -158,7 +159,7 @@ function HangoutCard({ hangout: h, now }: { hangout: Hangout; now: number }) {
               />
             )}
             {h.by === me && (
-              <DeleteButton onDelete={() => mutate((s) => s.remove("hangouts", h.id), "Hangout deleted")} />
+              <DeleteButton onDelete={() => moveToTrash("hangouts", h.id, me, "Hangout")} />
             )}
           </span>
         </div>

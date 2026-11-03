@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 import { Silkscreen, Space_Grotesk } from "next/font/google";
 import { MeProvider } from "@/components/me-provider";
@@ -56,7 +57,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <ModeBanner />
           <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-4 py-7 md:px-6">{children}</main>
           <footer className="relative z-10 pt-6 pb-28 text-center text-sm text-muted-foreground md:pb-8">
-            made with 💖 by the gang
+            made with 💖 by the gang ·{" "}
+            <Link href="/trash" className="underline-offset-4 hover:text-foreground hover:underline">
+              trash &amp; backup
+            </Link>
           </footer>
         </MeProvider>
         <Toaster theme="dark" position="top-center" />

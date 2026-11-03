@@ -17,10 +17,25 @@ service cloud.firestore {
         && d.get('by', '').size() <= 20;
     }
 
+    // Deleting only moves things to Trash (sets deletedAt). It must be "now",
+    // so nobody can backdate it to skip the 30-day Trash period.
+    function okDeletedAt() {
+      let v = request.resource.data.get('deletedAt', null);
+      return v == null
+        || (resource != null && v == resource.data.get('deletedAt', null))
+        || (v is int && v > request.time.toMillis() - 600000 && v < request.time.toMillis() + 600000);
+    }
+
+    // Removed for good only after 30 days in Trash
+    function trashExpired() {
+      let v = resource.data.get('deletedAt', null);
+      return v is int && v < request.time.toMillis() - 30 * 24 * 60 * 60 * 1000;
+    }
+
     match /{col}/{id} {
       allow read: if okCollection(col);
-      allow create, update: if okCollection(col) && okDoc();
-      allow delete: if okCollection(col);
+      allow create, update: if okCollection(col) && okDoc() && okDeletedAt();
+      allow delete: if okCollection(col) && trashExpired();
     }
   }
 }

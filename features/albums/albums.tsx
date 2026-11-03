@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ArrowLeft, Pencil, Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMe } from "@/components/me-provider";
@@ -13,12 +12,13 @@ import { EmptyState, LoadingCards, PageHeader } from "@/components/page-header";
 import { DeleteButton } from "@/components/event-bits";
 import { Field, FormDialog } from "@/components/form-dialog";
 import { PhotoGrid } from "@/components/photo-grid";
-import { deleteUploadedPhoto, usePhotoLibrary } from "@/features/albums/photo-library";
+import { trashUploadedPhotos, usePhotoLibrary } from "@/features/albums/photo-library";
+import { moveToTrash } from "@/lib/trash";
 import { UploadButton } from "@/features/albums/upload-button";
 import { mutate } from "@/lib/mutate";
 import type { Album } from "@/lib/types";
 import { useCollection } from "@/lib/use-collection";
-import { nameOf } from "@/content/members";
+import { nameOf, type MemberId } from "@/content/members";
 import type { Photo } from "@/content/photos";
 
 type AlbumView = Pick<Album, "id" | "title" | "description" | "photos"> &
@@ -156,11 +156,11 @@ export function AlbumDetail({ id }: { id: string }) {
                 <Pencil /> Edit
               </Button>
             )}
-            {!album.builtin && album.by === me && (
+            {!album.builtin && me && album.by === me && (
               <DeleteButton
                 label="Delete album"
                 onDelete={async () => {
-                  if (await mutate((s) => s.remove("albums", album.id), "Album deleted")) router.push("/albums");
+                  if (await moveToTrash("albums", album.id, me, "Album")) router.push("/albums");
                 }}
               />
             )}
@@ -171,7 +171,7 @@ export function AlbumDetail({ id }: { id: string }) {
         <PhotoGrid
           photos={albumPhotos}
           renderActions={(photo, close) =>
-            photo.upload?.by === me && <DeletePhotoButton photo={photo} onDeleted={close} />
+            me && photo.upload?.by === me && <DeletePhotoButton photo={photo} me={me} onDeleted={close} />
           }
         />
       ) : (
@@ -182,8 +182,8 @@ export function AlbumDetail({ id }: { id: string }) {
   );
 }
 
-/** Lightbox button: deletes a photo you uploaded, everywhere */
-function DeletePhotoButton({ photo, onDeleted }: { photo: Photo; onDeleted: () => void }) {
+/** Lightbox button: moves a photo you uploaded to Trash (it leaves every album) */
+function DeletePhotoButton({ photo, me, onDeleted }: { photo: Photo; me: MemberId; onDeleted: () => void }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -197,15 +197,8 @@ function DeletePhotoButton({ photo, onDeleted }: { photo: Photo; onDeleted: () =
       onClick={async () => {
         if (!confirming) return setConfirming(true);
         setBusy(true);
-        try {
-          await deleteUploadedPhoto(photo);
-          toast.success("Photo deleted");
-          onDeleted();
-        } catch (err) {
-          console.error(err);
-          toast.error("Couldn't delete the photo. Try again?");
-          setBusy(false);
-        }
+        if (await trashUploadedPhotos([photo], me)) onDeleted();
+        else setBusy(false);
       }}
     >
       <Trash2 /> {confirming && (busy ? "Deleting…" : "Delete from every album?")}
@@ -252,11 +245,7 @@ function AlbumDialog({
           const kept = new Set(data.photos);
           const dropped = library.filter((p) => p.upload?.album === album.id && !kept.has(p.src) && chosen.has(p.src));
           const saved = await mutate((s) => s.update("albums", album.id, data), "Album saved");
-          if (saved && dropped.length) {
-            const results = await Promise.allSettled(dropped.map(deleteUploadedPhoto));
-            const failed = results.filter((r) => r.status === "rejected").length;
-            if (failed) toast.error(`Couldn't delete ${failed} photo${failed > 1 ? "s" : ""}. Try again?`);
-          }
+          if (saved && dropped.length) await trashUploadedPhotos(dropped, me);
           return saved;
         }
 

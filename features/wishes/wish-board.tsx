@@ -13,6 +13,7 @@ import { EmptyState, LoadingCards, PageHeader } from "@/components/page-header";
 import { DeleteButton } from "@/components/event-bits";
 import { Field, FieldRow, FormDialog, FormSelect } from "@/components/form-dialog";
 import { mutate } from "@/lib/mutate";
+import { moveToTrash } from "@/lib/trash";
 import { formatDay } from "@/lib/time";
 import { membersIn, type Wish } from "@/lib/types";
 import { useCollection } from "@/lib/use-collection";
@@ -185,7 +186,7 @@ function WishCard({ wish: w }: { wish: Wish }) {
               {w.done ? <Undo2 /> : <Check />}
             </Button>
           )}
-          {w.by === me && <DeleteButton onDelete={() => mutate((s) => s.remove("wishes", w.id), "Wish deleted")} />}
+          {w.by === me && <DeleteButton onDelete={() => moveToTrash("wishes", w.id, me, "Wish")} />}
         </span>
       </div>
     </article>

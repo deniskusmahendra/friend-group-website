@@ -2,11 +2,13 @@
 
 import { useSyncExternalStore } from "react";
 import { getStore, type StoreStatus } from "@/lib/store";
+import { purgeExpired } from "@/lib/trash";
 import type { CollectionName, Collections } from "@/lib/types";
 
-type Snapshot<T> = { rows: T[]; loading: boolean; error: Error | null };
+/** rows = live documents; trashed = ones in Trash (deletedAt set) */
+type Snapshot<T> = { rows: T[]; trashed: T[]; loading: boolean; error: Error | null };
 
-const LOADING: Snapshot<never> = { rows: [], loading: true, error: null };
+const LOADING: Snapshot<never> = { rows: [], trashed: [], loading: true, error: null };
 
 // One live subscription per collection, shared by every component and kept
 // open for the whole visit, so switching pages shows data instantly.
@@ -21,9 +23,12 @@ function start(col: CollectionName) {
   getStore().then(({ store }) =>
     store.subscribe(
       col,
-      (rows) => {
-        snapshots.set(col, { rows, loading: false, error: null });
+      (all) => {
+        const rows = all.filter((r) => !r.deletedAt);
+        const trashed = all.filter((r) => r.deletedAt);
+        snapshots.set(col, { rows, trashed, loading: false, error: null });
         notify();
+        purgeExpired(col, trashed);
       },
       (error) => {
         console.error(`[${col}]`, error);
