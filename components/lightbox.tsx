@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useRef } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Dialog as DialogPrimitive } from "@base-ui/react/dialog";
+import { MemberAvatar } from "@/components/member-avatar";
+import { nameOf } from "@/content/members";
 import type { Photo } from "@/content/photos";
 
 const navButton =
@@ -14,10 +16,13 @@ export function Lightbox({
   photos,
   index,
   onIndexChange,
+  renderActions,
 }: {
   photos: Photo[];
   index: number | null;
   onIndexChange: (index: number | null) => void;
+  /** Extra buttons for the current photo, e.g. delete */
+  renderActions?: (photo: Photo) => React.ReactNode;
 }) {
   const touchX = useRef<number | null>(null);
   const photo = index === null ? null : photos[index];
@@ -52,6 +57,17 @@ export function Lightbox({
               sizes="92vw"
               className="max-h-[84dvh] w-auto max-w-[92vw] rounded-lg object-contain shadow-2xl animate-in fade-in-0 zoom-in-95"
             />
+          )}
+          {photo && (photo.upload || renderActions) && (
+            <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+              {photo.upload && (
+                <span className="flex items-center gap-2 rounded-full bg-black/60 py-1 pr-3 pl-1 text-sm text-white">
+                  <MemberAvatar id={photo.upload.by} size="sm" ring={false} />
+                  {nameOf(photo.upload.by)}
+                </span>
+              )}
+              {renderActions?.(photo)}
+            </div>
           )}
           <DialogPrimitive.Close className={`${navButton} top-4 right-4`} aria-label="Close">
             <X className="size-5" />

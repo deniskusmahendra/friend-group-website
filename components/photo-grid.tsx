@@ -7,7 +7,15 @@ import { cn } from "@/lib/utils";
 import type { Photo } from "@/content/photos";
 
 /** Masonry grid (or square strip) of photos that open in the lightbox */
-export function PhotoGrid({ photos, variant = "masonry" }: { photos: Photo[]; variant?: "masonry" | "strip" }) {
+export function PhotoGrid({
+  photos,
+  variant = "masonry",
+  renderActions,
+}: {
+  photos: Photo[];
+  variant?: "masonry" | "strip";
+  renderActions?: (photo: Photo, close: () => void) => React.ReactNode;
+}) {
   const [index, setIndex] = useState<number | null>(null);
 
   return (
@@ -38,7 +46,12 @@ export function PhotoGrid({ photos, variant = "masonry" }: { photos: Photo[]; va
           </button>
         ))}
       </div>
-      <Lightbox photos={photos} index={index} onIndexChange={setIndex} />
+      <Lightbox
+        photos={photos}
+        index={index !== null && index < photos.length ? index : null}
+        onIndexChange={setIndex}
+        renderActions={renderActions && ((photo) => renderActions(photo, () => setIndex(null)))}
+      />
     </>
   );
 }

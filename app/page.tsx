@@ -2,10 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { Gamepad2, MapPin } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { PhotoGrid } from "@/components/photo-grid";
-import { ComingUp, Crew, FreshWishes } from "@/features/home/home-sections";
+import { ComingUp, Crew, FreshWishes, Memories } from "@/features/home/home-sections";
 import { cn } from "@/lib/utils";
-import { photos } from "@/content/photos";
 import { site } from "@/content/site";
 
 export default function HomePage() {
@@ -54,7 +52,7 @@ export default function HomePage() {
             all albums →
           </Link>
         </div>
-        <PhotoGrid photos={photos.slice(0, 6)} variant="strip" />
+        <Memories />
       </section>
     </div>
   );

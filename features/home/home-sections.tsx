@@ -5,6 +5,8 @@ import { Gamepad2, MapPin } from "lucide-react";
 import { MemberAvatar } from "@/components/member-avatar";
 import { useMe } from "@/components/me-provider";
 import { EmptyState } from "@/components/page-header";
+import { PhotoGrid } from "@/components/photo-grid";
+import { usePhotoLibrary } from "@/features/albums/photo-library";
 import { LiveBadge } from "@/components/event-bits";
 import { byStart, formatWhen, isLive, isUpcoming, relativeTime } from "@/lib/time";
 import { useCollection } from "@/lib/use-collection";
@@ -123,4 +125,10 @@ export function FreshWishes() {
       )}
     </Panel>
   );
+}
+
+/** Latest 6 photos, uploads first */
+export function Memories() {
+  const { all } = usePhotoLibrary();
+  return <PhotoGrid photos={all.slice(0, 6)} variant="strip" />;
 }

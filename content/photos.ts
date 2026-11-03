@@ -3,6 +3,8 @@ export type Photo = {
   width: number;
   height: number;
   alt: string;
+  /** Set for photos uploaded through the site */
+  upload?: { id: string; by: string };
 };
 
 // Photos live in public/photos. To add one: drop the file in that folder
@@ -20,9 +22,3 @@ export const photos: Photo[] = [
   { src: "/photos/photo-10.jpeg", width: 1280, height: 720, alt: "Hanging out" },
   { src: "/photos/photo-11.jpeg", width: 1280, height: 960, alt: "Hanging out" },
 ];
-
-const bySrc = new Map(photos.map((p) => [p.src, p]));
-
-/** Albums store photo paths; ignore any that were removed from the list above. */
-export const resolvePhotos = (srcs: readonly string[]) =>
-  srcs.map((s) => bySrc.get(s)).filter((p): p is Photo => Boolean(p));

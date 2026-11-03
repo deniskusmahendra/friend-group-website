@@ -47,11 +47,19 @@ export type Album = Doc & {
   photos: string[];
 };
 
+/** A photo someone uploaded through the site (file lives in Vercel Blob) */
+export type UploadedPhoto = Doc & {
+  src: string;
+  width: number;
+  height: number;
+};
+
 export type Collections = {
   hangouts: Hangout;
   sessions: Session;
   wishes: Wish;
   albums: Album;
+  photos: UploadedPhoto;
 };
 
 export type CollectionName = keyof Collections;

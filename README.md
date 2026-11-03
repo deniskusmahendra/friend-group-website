@@ -33,6 +33,18 @@ The Firebase web keys aren't secret; access is controlled by the Firestore rules
 2. Under **Environment Variables**, add the six `NEXT_PUBLIC_FIREBASE_*` values from `.env.local`.
 3. Click **Deploy**. Every push to `main` redeploys automatically.
 
+## Turn on photo uploads (Vercel Blob)
+
+Uploaded photos are stored in Vercel Blob, which is free on the Hobby plan (about 1 GB storage and 10 GB downloads a month). If a limit is hit, uploads stop; you're never billed.
+
+1. In your Vercel project, open **Storage → Create → Blob**. Choose **Public** access and connect it to the project (all environments).
+   Vercel adds `BLOB_READ_WRITE_TOKEN` to the project automatically.
+2. **Redeploy** (Deployments → ⋯ → Redeploy) so the site picks up the token.
+3. Re-publish [`firestore.rules`](firestore.rules) in Firebase (it now includes the `photos` collection).
+4. For uploads on `npm run dev` too, copy `BLOB_READ_WRITE_TOKEN` from Vercel (project **Settings → Environment Variables**) into `.env.local`.
+
+Photos are shrunk in the browser before upload (max 1920px, WebP), so each is usually a few hundred KB.
+
 ## Project layout
 
 ```
@@ -41,7 +53,8 @@ features/            one folder per feature: list, cards, and create dialog
 components/          shared UI (header, avatars, lightbox, form dialog)
 components/ui/       shadcn/ui components
 content/             members, photos, site name and game suggestions: edit these
-lib/                 data store (Firestore/local), hooks, time and calendar helpers
+lib/                 data store (Firestore/local), hooks, image compression, time and calendar helpers
+app/api/             upload token + photo delete routes (Vercel Blob)
 public/members/      member profile photos
 public/photos/       group photos
 ```
@@ -50,7 +63,7 @@ public/photos/       group photos
 
 - **Group name, tagline:** [`content/site.ts`](content/site.ts)
 - **Members:** [`content/members.ts`](content/members.ts). Denis shows a "D" until you add `public/members/denis.jpeg` and set `photo` there.
-- **New photos:** put them in `public/photos/`, then add a line to [`content/photos.ts`](content/photos.ts).
+- **New photos:** use **Upload photos** on the Albums page. (Or commit them to `public/photos/` and add a line to [`content/photos.ts`](content/photos.ts).)
 
 ## How it works
 
@@ -58,4 +71,5 @@ public/photos/       group photos
 - **Live data.** Each collection (`hangouts`, `sessions`, `wishes`, `albums`) has one Firestore `onSnapshot` subscription, shared through `useSyncExternalStore` ([`lib/use-collection.ts`](lib/use-collection.ts)).
 - **Pages are static shells.** Data and anything time-based ("in 3 days", LIVE) render in the browser, which keeps Cache Components prerendering happy.
 - **Only share the link with the gang.** Anyone who has it can add or delete things.
-- **Photo uploads** aren't supported in the site, because Firebase Storage needs a paid plan. Add photos by committing them.
+- **Photo uploads** go to Vercel Blob through [`app/api/upload/route.ts`](app/api/upload/route.ts) (images only, max 5 MB, `photos/` folder only); a record is saved in the Firestore `photos` collection. Whoever uploaded a photo can delete it from the photo viewer.
+- **Built-in photos** in `public/photos/` still work: add the file and a line in `content/photos.ts`.
