@@ -62,7 +62,7 @@ public/photos/       group photos
 ## Customising
 
 - **Group name, tagline:** [`content/site.ts`](content/site.ts)
-- **Members:** [`content/members.ts`](content/members.ts). Denis shows a "D" until you add `public/members/denis.jpeg` and set `photo` there.
+- **Members:** [`content/members.ts`](content/members.ts). Photos live in `public/members/`; a member without a photo shows their initial.
 - **New photos:** use **Upload photos** on the Albums page. (Or commit them to `public/photos/` and add a line to [`content/photos.ts`](content/photos.ts).)
 
 ## How it works

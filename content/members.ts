@@ -8,8 +8,7 @@ export type Member = {
 };
 
 export const members = [
-  // TODO: add public/members/denis.jpeg, then set photo: "/members/denis.jpeg"
-  { id: "denis", name: "Denis", color: "#ff3b5c" },
+  { id: "denis", name: "Denis", photo: "/members/denis.jpeg", color: "#ff3b5c" },
   { id: "nauval", name: "Nauval", photo: "/members/nauval.jpeg", color: "#3b82ff" },
   { id: "fergio", name: "Fergio", photo: "/members/fergio.jpeg", color: "#22d3ee" },
   { id: "jovano", name: "Jovano", photo: "/members/jovano.jpeg", color: "#a78bfa" },
