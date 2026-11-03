@@ -7,15 +7,13 @@ import { Button } from "@/components/ui/button";
 import { useMe } from "@/components/me-provider";
 import { uploadPhotos } from "@/features/albums/photo-library";
 
-/** Opens the file picker and uploads the chosen photos. onUploaded gets the new photo srcs. */
+/** Opens the file picker and uploads the chosen photos */
 export function UploadButton({
   albumId,
-  onUploaded,
   size = "lg",
 }: {
   /** Custom album to upload into; omit for the Together album */
   albumId?: string;
-  onUploaded?: (srcs: string[]) => void | Promise<unknown>;
   size?: "lg" | "default";
 }) {
   const { requireMe } = useMe();
@@ -32,7 +30,6 @@ export function UploadButton({
       const { srcs, failed } = await uploadPhotos(files, me, albumId, (done, total) =>
         toast.loading(`Uploading ${done} / ${total}…`, { id }),
       );
-      if (srcs.length) await onUploaded?.(srcs);
 
       if (!failed.length) toast.success(`${srcs.length} photo${srcs.length > 1 ? "s" : ""} uploaded 📸`, { id });
       else if (srcs.length) toast.warning(`Uploaded ${srcs.length}, but ${failed.length} failed: ${failed.join(", ")}`, { id });

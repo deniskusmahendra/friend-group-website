@@ -28,13 +28,12 @@ function useAlbums() {
   const { rows, loading } = useCollection("albums");
   const library = usePhotoLibrary();
 
-  // An upload belongs to the album it was uploaded into. Older uploads have no album set,
-  // so for those: whichever custom album lists them.
-  const inCustomAlbum = (p: Photo) => {
-    if (!p.upload) return false;
-    if (p.upload.album) return loading || rows.some((a) => a.id === p.upload!.album && a.photos.includes(p.src));
-    return p.upload.album === undefined && rows.some((a) => a.photos.includes(p.src));
-  };
+  // An upload lives in the album it was uploaded into, even if that album's list misses it.
+  // Older uploads have no album set, so for those: whichever custom album lists them.
+  const albumIds = new Set(rows.map((a) => a.id));
+  const homeOf = (p: Photo) => (p.upload?.album && (loading || albumIds.has(p.upload.album)) ? p.upload.album : undefined);
+  const inCustomAlbum = (p: Photo) =>
+    Boolean(homeOf(p)) || (p.upload?.album === undefined && rows.some((a) => a.photos.includes(p.src)));
 
   // Always-there album: built-in photos plus uploads that don't belong to a custom album
   const together: AlbumView = {
@@ -44,7 +43,13 @@ function useAlbums() {
     photos: library.all.filter((p) => !inCustomAlbum(p)).map((p) => p.src),
     builtin: true,
   };
-  const albums: AlbumView[] = [together, ...[...rows].sort((a, b) => b.createdAt - a.createdAt)];
+  const custom: AlbumView[] = [...rows]
+    .sort((a, b) => b.createdAt - a.createdAt)
+    .map((a) => {
+      const home = library.all.filter((p) => homeOf(p) === a.id && !a.photos.includes(p.src)).map((p) => p.src);
+      return { ...a, photos: [...home, ...a.photos] };
+    });
+  const albums = [together, ...custom];
   return { albums, loading, library };
 }
 
@@ -137,11 +142,6 @@ export function AlbumDetail({ id }: { id: string }) {
 
   const albumPhotos = library.resolve(album.photos);
 
-  // Uploads on a custom album's page go into that album only
-  const addToAlbum = album.builtin
-    ? undefined
-    : (srcs: string[]) => mutate((s) => s.update("albums", album.id, { photos: [...album.photos, ...srcs] }));
-
   return (
     <>
       {back}
@@ -150,7 +150,7 @@ export function AlbumDetail({ id }: { id: string }) {
         description={album.description}
         action={
           <>
-            <UploadButton albumId={album.builtin ? undefined : album.id} onUploaded={addToAlbum} />
+            <UploadButton albumId={album.builtin ? undefined : album.id} />
             {!album.builtin && (
               <Button variant="outline" size="lg" onClick={() => requireMe() && setEditing(true)}>
                 <Pencil /> Edit
@@ -233,7 +233,11 @@ function AlbumDialog({
       open={open}
       onOpenChange={onOpenChange}
       title={album ? "Edit album" : "New album"}
-      description={album ? undefined : "Pick existing photos, or create it empty and upload new ones."}
+      description={
+        album
+          ? "Unticking a photo that was uploaded to this album deletes it. Other photos just leave the album."
+          : "Pick existing photos, or create it empty and upload new ones."
+      }
       submitLabel={album ? "Save" : "Create"}
       className="sm:max-w-2xl"
       onSubmit={async (fd) => {
@@ -243,7 +247,18 @@ function AlbumDialog({
           description: String(fd.get("description")).trim(),
           photos: fd.getAll("photos").map(String),
         };
-        if (album) return mutate((s) => s.update("albums", album.id, data), "Album saved");
+        if (album) {
+          // Photos uploaded into this album have nowhere else to live, so unticking one deletes it
+          const kept = new Set(data.photos);
+          const dropped = library.filter((p) => p.upload?.album === album.id && !kept.has(p.src) && chosen.has(p.src));
+          const saved = await mutate((s) => s.update("albums", album.id, data), "Album saved");
+          if (saved && dropped.length) {
+            const results = await Promise.allSettled(dropped.map(deleteUploadedPhoto));
+            const failed = results.filter((r) => r.status === "rejected").length;
+            if (failed) toast.error(`Couldn't delete ${failed} photo${failed > 1 ? "s" : ""}. Try again?`);
+          }
+          return saved;
+        }
 
         let newId = "";
         const ok = await mutate(async (s) => (newId = await s.add("albums", { ...data, by: me })), "Album created 📸");
