@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { Lightbox } from "@/components/lightbox";
+import { PhotoCounts, usePhotoSocial } from "@/components/photo-social";
 import { cn } from "@/lib/utils";
 import type { Photo } from "@/content/photos";
 
@@ -17,6 +18,7 @@ export function PhotoGrid({
   renderActions?: (photo: Photo, close: () => void) => React.ReactNode;
 }) {
   const [index, setIndex] = useState<number | null>(null);
+  const social = usePhotoSocial();
 
   return (
     <>
@@ -43,6 +45,7 @@ export function PhotoGrid({
                 variant === "strip" ? "h-full object-cover" : "h-auto",
               )}
             />
+            <PhotoCounts src={p.src} social={social} />
           </button>
         ))}
       </div>

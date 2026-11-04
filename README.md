@@ -1,6 +1,6 @@
 # GANG: friend group website
 
-Our corner of the internet: photo albums, hangout plans, gaming sessions, and wishes & goals.
+Our corner of the internet: photo albums, hangout plans, gaming sessions, wishes & goals, and badges.
 
 Live at **https://friend-group-website.vercel.app**
 
@@ -58,17 +58,19 @@ Photos are shrunk in the browser before upload (max 1920px, WebP), so each is us
 
 - **Who are you?** There are no logins. Each person picks their name (top-right); it's remembered in that browser.
 - **Albums.** *Together* holds the built-in photos and everything uploaded there. A photo uploaded inside another album stays in that album only. Albums can also include existing photos picked in **Edit**.
+- **Reactions & comments.** Open any photo to react (❤️ 😂 🔥 😮 😭 💀, tap again to undo) and comment. Thumbnails show the counts. You can delete your own comments (they go to Trash).
 - **Removing photos.** Unticking a photo in an album's **Edit** removes it from that album; if it was uploaded *into* that album, it's deleted (it has nowhere else to live). Whoever uploaded a photo can also delete it from the photo viewer.
-- **Trash.** Nothing is erased right away. Deleting a hangout, session, wish, album or photo moves it to **Trash** (link in the footer, `/trash`), with an **Undo** button on the toast. Anything in Trash can be restored for 30 days, then it's removed for good, including the photo file.
+- **Badges** (`/badges`). 14 achievements, each with bronze, silver and gold levels: planning and going to hangouts, gaming (including late-night sessions), uploading photos, making albums, wishes and goals, cheering, commenting and reacting. There's a leaderboard, and you get a pop-up when you reach a new level.
+- **Trash.** Nothing is erased right away. Deleting a hangout, session, wish, album, photo or comment moves it to **Trash** (link in the footer, `/trash`), with an **Undo** button on the toast. Anything in Trash can be restored for 30 days, then it's removed for good, including the photo file.
 - **Backup.** The Trash page has **Download backup** (everything, as one JSON file) and **Restore from backup**, which brings back whatever is missing and never overwrites what still exists. Photo files aren't in the backup, so keep a copy of photos you care about.
 
 ## Project layout
 
 ```
-app/                 routes (/, /albums, /albums/[id], /hangouts, /gaming, /wishes, /trash)
+app/                 routes (/, /albums, /albums/[id], /hangouts, /gaming, /wishes, /badges, /trash)
 app/api/             upload (presigned Blob URLs) and photo-file delete routes
 features/            one folder per feature: list, cards, and create dialog
-components/          shared UI (header, avatars, lightbox, form dialog)
+components/          shared UI (header, avatars, photo viewer with reactions/comments, form dialog)
 components/ui/       shadcn/ui components
 content/             members, built-in photos, site name and game suggestions: edit these
 lib/                 data store (Firestore/local), trash & backup, hooks, image compression, time and calendar helpers
@@ -85,8 +87,10 @@ public/photos/       built-in group photos
 
 ## How it works
 
-- **Live data.** Firestore has five collections: `hangouts`, `sessions`, `wishes`, `albums`, `photos`. Each has one `onSnapshot` subscription, shared through `useSyncExternalStore` ([`lib/use-collection.ts`](lib/use-collection.ts)).
+- **Live data.** Firestore has seven collections: `hangouts`, `sessions`, `wishes`, `albums`, `photos`, `reactions`, `comments`. Each has one `onSnapshot` subscription, shared through `useSyncExternalStore` ([`lib/use-collection.ts`](lib/use-collection.ts)).
 - **Trash is a field.** Deleting sets `deletedAt`/`deletedBy` instead of removing the document ([`lib/trash.ts`](lib/trash.ts)). Lists hide those; the Trash page shows them. When someone opens the site, their browser removes anything that has been in Trash for over 30 days. The Firestore rules only allow that final removal after 30 days, and don't let `deletedAt` be backdated.
 - **Photos.** The browser compresses each photo, asks [`app/api/upload/route.ts`](app/api/upload/route.ts) for a short-lived presigned URL (images only, max 5 MB, `photos/` folder only) and uploads straight to Vercel Blob. A record (with the album it was uploaded into) is saved in the `photos` collection. The file itself is deleted through [`app/api/photos/route.ts`](app/api/photos/route.ts) when its Trash time is up.
+- **Reactions** are one document per photo (id = a hash of the photo URL) holding a map of members per emoji. They're written with a merge, so two people reacting at once don't overwrite each other. **Comments** are one document each, pointing at the photo URL. Both work on built-in and uploaded photos.
+- **Badges** aren't stored anywhere: they're worked out live from the data ([`features/badges/badges.ts`](features/badges/badges.ts)), so deleting or restoring things updates them. Each browser remembers which levels it has already announced, to show the unlock pop-up only once.
 - **Pages are static shells.** Data and anything time-based ("in 3 days", LIVE) render in the browser, which keeps Cache Components prerendering happy.
 - **Only share the link with the gang.** There's no password: anyone who has the link can add things, or move them to Trash.

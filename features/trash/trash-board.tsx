@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
-import { Download, Gamepad2, Images, MapPin, RotateCcw, Sparkles, Upload } from "lucide-react";
+import { Download, Gamepad2, Images, MapPin, MessageCircle, RotateCcw, Sparkles, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { MemberAvatar } from "@/components/member-avatar";
@@ -29,6 +29,7 @@ function useTrash() {
   const wishes = useCollection("wishes");
   const albums = useCollection("albums");
   const photos = useCollection("photos");
+  const comments = useCollection("comments");
 
   const items: Item[] = [
     ...hangouts.trashed.map((h) => ({ col: "hangouts" as const, id: h.id, kind: "Hangout", title: h.title, icon: <MapPin />, deletedAt: h.deletedAt!, deletedBy: h.deletedBy })),
@@ -44,9 +45,10 @@ function useTrash() {
       deletedAt: p.deletedAt!,
       deletedBy: p.deletedBy,
     })),
+    ...comments.trashed.map((c) => ({ col: "comments" as const, id: c.id, kind: `Comment by ${nameOf(c.by)}`, title: c.text, icon: <MessageCircle />, deletedAt: c.deletedAt!, deletedBy: c.deletedBy })),
   ].sort((a, b) => b.deletedAt - a.deletedAt);
 
-  const loading = [hangouts, sessions, wishes, albums, photos].some((c) => c.loading);
+  const loading = [hangouts, sessions, wishes, albums, photos, comments].some((c) => c.loading);
   return { items, loading };
 }
 
@@ -114,7 +116,7 @@ function BackupCard() {
     <section className="mt-10 rounded-2xl border bg-card p-5">
       <h2 className="font-pixel text-xl font-bold text-white">Backup</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Download everything (hangouts, sessions, wishes, albums, photo list) as one file. If something ever gets
+        Download everything (hangouts, sessions, wishes, albums, photo list, reactions and comments) as one file. If something ever gets
         wiped, restoring the file brings back whatever is missing. It never overwrites things that still exist.
         Photo files themselves aren&apos;t in the backup, so a photo deleted more than {TRASH_DAYS} days ago comes
         back without its picture.

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Gamepad2, House, Images, MapPin, Sparkles } from "lucide-react";
+import { Gamepad2, House, Images, MapPin, Sparkles, Trophy } from "lucide-react";
 import { MemberAvatar } from "@/components/member-avatar";
 import { useMe } from "@/components/me-provider";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,7 @@ const nav = [
   { href: "/hangouts", label: "Hangouts", icon: MapPin },
   { href: "/gaming", label: "Gaming", icon: Gamepad2 },
   { href: "/wishes", label: "Wishes", icon: Sparkles },
+  { href: "/badges", label: "Badges", icon: Trophy },
 ];
 
 export function SiteHeader() {
@@ -53,14 +54,16 @@ function Nav() {
           key={href}
           href={href}
           aria-current={isActive(href) ? "page" : undefined}
+          title={label}
           className={cn(
-            "flex flex-col items-center gap-0.5 rounded-xl px-3 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:text-foreground",
-            "md:flex-row md:gap-2 md:rounded-full md:px-4 md:py-2 md:text-sm md:hover:bg-card",
+            "flex flex-col items-center gap-0.5 rounded-xl px-1.5 py-1.5 text-[11px] min-[400px]:px-2.5 font-semibold text-muted-foreground transition-colors hover:text-foreground",
+            "md:flex-row md:gap-2 md:rounded-full md:px-3 md:py-2 md:text-sm md:hover:bg-card lg:px-4",
             "aria-[current=page]:bg-linear-to-r aria-[current=page]:from-neon-red/25 aria-[current=page]:to-neon-blue/25 aria-[current=page]:text-foreground aria-[current=page]:ring-1 aria-[current=page]:ring-white/10",
           )}
         >
           <Icon className="size-5 md:size-4" />
-          {label}
+          {/* Tablets: icons only, so the header fits */}
+          <span className="md:max-lg:sr-only">{label}</span>
         </Link>
       ))}
     </nav>

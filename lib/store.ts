@@ -16,6 +16,8 @@ export interface Store {
   add<C extends CollectionName>(col: C, data: NewDoc<C>): Promise<string>;
   update(col: CollectionName, id: string, patch: Record<string, unknown>): Promise<void>;
   remove(col: CollectionName, id: string): Promise<void>;
+  /** Creates or deep-merges into a document with a known id (nested maps are merged, not replaced) */
+  merge(col: CollectionName, id: string, patch: Record<string, unknown>): Promise<void>;
   /** Writes a whole document under a known id (restoring a backup) */
   put(col: CollectionName, id: string, data: Record<string, unknown>): Promise<void>;
 }
@@ -60,10 +62,23 @@ async function createFirebaseStore(): Promise<Store> {
     async remove(col, id) {
       await fs.deleteDoc(fs.doc(db, col, id));
     },
+    async merge(col, id, patch) {
+      await fs.setDoc(fs.doc(db, col, id), patch, { merge: true });
+    },
     async put(col, id, data) {
       await fs.setDoc(fs.doc(db, col, id), data);
     },
   };
+}
+
+const isPlainObject = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+
+function deepMerge(target: Record<string, unknown>, patch: Record<string, unknown>) {
+  for (const [k, v] of Object.entries(patch)) {
+    target[k] = isPlainObject(v) && isPlainObject(target[k]) ? deepMerge(target[k], v) : v;
+  }
+  return target;
 }
 
 function createLocalStore(): Store {
@@ -126,6 +141,12 @@ function createLocalStore(): Store {
     },
     async remove(col, id) {
       write(col, read(col).filter((row) => row.id !== id));
+    },
+    async merge(col, id, patch) {
+      const rows = read(col);
+      const row = rows.find((r) => r.id === id);
+      if (!row) return write(col, [...rows, { ...patch, id }]);
+      write(col, rows.map((r) => (r === row ? deepMerge(structuredClone(row), patch) : r)));
     },
     async put(col, id, data) {
       write(col, [...read(col).filter((row) => row.id !== id), { ...data, id }]);

@@ -6,7 +6,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     function okCollection(col) {
-      return col in ['hangouts', 'sessions', 'wishes', 'albums', 'photos'];
+      return col in ['hangouts', 'sessions', 'wishes', 'albums', 'photos', 'reactions', 'comments'];
     }
 
     // Blocks junk/abuse: small docs only, and required fields stay strings.

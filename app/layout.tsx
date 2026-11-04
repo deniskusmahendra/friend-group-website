@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Silkscreen, Space_Grotesk } from "next/font/google";
 import { MeProvider } from "@/components/me-provider";
+import { BadgeWatcher } from "@/features/badges/badge-watcher";
 import { ModeBanner } from "@/components/mode-banner";
 import { SiteHeader } from "@/components/site-header";
 import { Toaster } from "@/components/ui/sonner";
@@ -55,6 +56,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <SiteHeader />
           </Suspense>
           <ModeBanner />
+          <BadgeWatcher />
           <main className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-4 py-7 md:px-6">{children}</main>
           <footer className="relative z-10 pt-6 pb-28 text-center text-sm text-muted-foreground md:pb-8">
             made with 💖 by the gang ·{" "}
